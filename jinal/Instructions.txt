@@ -1,0 +1,7 @@
+Instructions
+1.	Copy and paste existing projects in your folder.
+2. 	If required make new ecplise/android Studio projects inside you respective projects.
+3.	make an inital commit.
+4. 	Be sure to pull regularly.
+
+I made this file just to force folder structure :p
