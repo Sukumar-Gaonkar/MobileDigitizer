@@ -1,0 +1,26 @@
+Types of FLANN based matcher
+
+cv::flann::Index GenFLANNIndex(cv::Mat keys)
+{
+  switch (keys.type())
+    {
+    case CV_32F:
+      {
+        return  cv::flann::Index(keys,cv::flann::KDTreeIndexParams(4));
+        break;
+       }
+    case CV_8U:
+      {
+        return cv::flann::Index(keys,cv::flann::HierarchicalClusteringIndexParams(),dist_type);
+        break;
+      }
+    default:
+      {
+        return cv::flann::Index(keys,cv::flann::KDTreeIndexParams(4));
+        break;
+      }
+    }
+
+}
+...
+cv::flann::Index tree = GenFLANNIndex(descriptors);

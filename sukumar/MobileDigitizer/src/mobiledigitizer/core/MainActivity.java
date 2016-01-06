@@ -8,10 +8,13 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.samples.facedetect.R;
-
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.highgui.Highgui;
+import com.alpha.mobiledigitizer.R;
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,8 +23,10 @@ import android.view.WindowManager;
 public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	private CameraBridgeViewBase   	mOpenCvCameraView;
-	Mat 							rgba,gray;
-	public native void imageProcess(long matAddrRgba,long matAddrGrey);
+	Mat 							rgba,gray,templateMat;
+	MatOfKeyPoint 					templateKeypoints;
+	String PicturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+	public native void imageProcess(long matAddrRgba,long matAddrGrey,long templateMat,long templateKeypoints);
 	
 	
 	private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
@@ -33,6 +38,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
                     Log.i("status", "OpenCV loaded successfully");
                     System.loadLibrary("MobileDigitizerNativeLib");
                     mOpenCvCameraView.enableView();
+                    
+                    FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
+                    templateKeypoints = new MatOfKeyPoint();
+                    templateMat = Highgui.imread(PicturesDir+"/formBack1Min.jpg");
+                    Log.e("info", PicturesDir+"/formBack1Min.jpg");
+                    detector.detect(templateMat, templateKeypoints);
                 } break;
                 default:
                 {
@@ -66,9 +77,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		gray = inputFrame.gray();
 		
 		long startTime = System.nanoTime();
-		imageProcess(rgba.getNativeObjAddr(),gray.getNativeObjAddr());
+		imageProcess(rgba.getNativeObjAddr(),gray.getNativeObjAddr(),templateMat.getNativeObjAddr(),templateKeypoints.getNativeObjAddr());
 		long endTime = System.nanoTime();
-		Log.e("info", "Native Code Time: " + (float)(endTime - startTime)/1E9);
+		Log.e("info", "Native Code Time- " + (float)(endTime - startTime)/1E9);
 		return rgba;
 	}
 	
