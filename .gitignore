@@ -9,6 +9,7 @@ RemoteSystemsTempFiles/
 
 # files for the dex VM
 *.dex
+*.jar
 
 # Java class files
 *.class
