@@ -1,2 +1,4 @@
-*
-!.gitignore
+/android/
+/com/
+/org/
+/.gitignore

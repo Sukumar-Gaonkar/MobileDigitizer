@@ -15,63 +15,63 @@ using namespace std;
 using namespace cv;
 
 extern "C" {
-JNIEXPORT void JNICALL Java_mobiledigitizer_core_MainActivity_imageProcess(JNIEnv* env,jobject thisObj, jlong addrRgba, jlong addrGray,jlong addrTemplateMat,jlong templateKeypoints);
+JNIEXPORT void JNICALL Java_mobiledigitizer_core_MainActivity_imageProcess(JNIEnv* env,jobject thisObj,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors);
 void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp);
 
-JNIEXPORT void JNICALL Java_mobiledigitizer_core_MainActivity_imageProcess(JNIEnv* env,jobject thisObj, jlong addrRgba, jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints){
+JNIEXPORT void JNICALL Java_mobiledigitizer_core_MainActivity_imageProcess(JNIEnv* env,jobject thisObj,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors){
 	__android_log_print(ANDROID_LOG_ERROR, "jni", "Entered Native Code2.0");
 
 	clock_t tStart;
-	Mat templateImgGray;
+
 	std::vector< DMatch > matches;
 
-	Mat& rgb = *(Mat*) addrRgba;
 	Mat& gray = *(Mat*) addrGray;
 	Mat& templateKeypointMat = *(Mat*) addrTemplateKeypoints;
-	Mat& templateImg = *(Mat*) addrTemplateMat;
-	__android_log_print(ANDROID_LOG_ERROR, "info", "templateImg %d",templateImg.type());
-	cvtColor(templateImg,templateImgGray,CV_BGR2GRAY);
+	Mat& templateDescriptors = *(Mat*) addrTemplateDescriptors;
 	vector<KeyPoint> templateKeypoints;
+	Mat& templateImgGray =  *(Mat*) addrTemplateMat;
+
+//	Mat templateImgGray;
+//	Mat& templateImg = *(Mat*) addrTemplateMat;
+//	tStart = clock();
+//	cvtColor(templateImg,templateImgGray,CV_BGR2GRAY);
+//	__android_log_print(ANDROID_LOG_ERROR, "info", "template CV_BGR2GRAY - %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+
 
 	tStart = clock();
 	Mat_to_vector_KeyPoint(templateKeypointMat,templateKeypoints);
 	__android_log_print(ANDROID_LOG_ERROR, "info", "MatofKeypoint to vector - %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
-	OrbFeatureDetector detector;
+	FastFeatureDetector detector;
 	OrbDescriptorExtractor descriptor;
-	std::vector<KeyPoint> keypoints_1, keypoints_2;
-	Mat descriptors_1,descriptors_2;
-//	FlannBasedMatcher matcher;
-	BFMatcher matcher(NORM_HAMMING,1);
+	std::vector<KeyPoint> keypoints_1;
+	Mat descriptors_1;
+	FlannBasedMatcher matcher;
 
 	tStart = clock();
 	detector.detect(gray,keypoints_1);
 	__android_log_print(ANDROID_LOG_ERROR, "info", "Keypoint detection time- %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
-//	detector.detect(gray,keypoints_2);
 
 	tStart = clock();
 	descriptor.compute(gray,keypoints_1,descriptors_1);
 	__android_log_print(ANDROID_LOG_ERROR, "info", "Keypoint description time- %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
-	descriptor.compute(templateImgGray,templateKeypoints,descriptors_2);
 
 
-////	tStart = clock();
-//	if(descriptors_1.type()!=CV_32F) {
-//		descriptors_1.convertTo(descriptors_1, CV_32F);
-////		__android_log_print(ANDROID_LOG_ERROR, "info", "Conversion1- %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
-//
-//	}
-////	tStart = clock();
-//	if(descriptors_2.type()!=CV_32F) {
-//		descriptors_2.convertTo(descriptors_2, CV_32F);
-////		__android_log_print(ANDROID_LOG_ERROR, "info", "Conversion2- %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
-//	}
-
-
-	__android_log_print(ANDROID_LOG_ERROR, "info", "%d - %d  %d - %d\n", descriptors_1.type(),descriptors_2.type(),descriptors_1.cols,descriptors_2.cols);
 
 	tStart = clock();
-	matcher.match( descriptors_1, descriptors_2, matches );
+	if(descriptors_1.type()!=CV_32F) {
+		descriptors_1.convertTo(descriptors_1, CV_32F);
+		__android_log_print(ANDROID_LOG_ERROR, "info", "Conversion1- %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+
+	}
+	tStart = clock();
+	if(templateDescriptors.type()!=CV_32F) {
+		templateDescriptors.convertTo(templateDescriptors, CV_32F);
+		__android_log_print(ANDROID_LOG_ERROR, "info", "Conversion2- %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+	}
+
+	tStart = clock();
+	matcher.match( descriptors_1, templateDescriptors, matches );
 	__android_log_print(ANDROID_LOG_ERROR, "info", "Matcher- %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 }
 

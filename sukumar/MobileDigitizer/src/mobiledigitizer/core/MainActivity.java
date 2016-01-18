@@ -9,7 +9,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
-import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.*;
 import org.opencv.highgui.Highgui;
 import com.alpha.mobiledigitizer.R;
 import android.app.Activity;
@@ -23,10 +23,10 @@ import android.view.WindowManager;
 public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	private CameraBridgeViewBase   	mOpenCvCameraView;
-	Mat 							rgba,gray,templateMat;
+	Mat 							rgba,gray,templateMat,templateDescriptors;
 	MatOfKeyPoint 					templateKeypoints;
 	String PicturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
-	public native void imageProcess(long matAddrRgba,long matAddrGrey,long templateMat,long templateKeypoints);
+	public native void imageProcess(long matAddrGray,long templateMat,long templateKeypoints,long templateDescriptors);
 	
 	
 	private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
@@ -39,11 +39,18 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
                     System.loadLibrary("MobileDigitizerNativeLib");
                     mOpenCvCameraView.enableView();
                     
-                    FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
+                    FeatureDetector detector = FeatureDetector.create(FeatureDetector.FAST);
+                    DescriptorExtractor descriptor = DescriptorExtractor.create(DescriptorExtractor.ORB) ;
                     templateKeypoints = new MatOfKeyPoint();
-                    templateMat = Highgui.imread(PicturesDir+"/formBack1Min.jpg");
+                    templateDescriptors = new Mat();
+                    templateMat = Highgui.imread(PicturesDir+"/formBack1Min.jpg",Highgui.CV_LOAD_IMAGE_GRAYSCALE);
                     Log.e("info", PicturesDir+"/formBack1Min.jpg");
+                    long startTime = System.nanoTime();
                     detector.detect(templateMat, templateKeypoints);
+                    long endTime = System.nanoTime(); Log.e("info", "Detection- " + (float)(endTime - startTime)/1E9);
+                    startTime = System.nanoTime();
+                    descriptor.compute(templateMat, templateKeypoints, templateDescriptors);
+                    endTime = System.nanoTime(); Log.e("info", "Description- " + (float)(endTime - startTime)/1E9);
                 } break;
                 default:
                 {
@@ -67,7 +74,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	@Override
 	public void onCameraViewStarted(int width, int height) {
 		// TODO Auto-generated method stub
-		rgba = new Mat(height,width,CvType.CV_8UC3);
+//		rgba = new Mat(height,width,CvType.CV_8UC3);
 	}
 	
 	@Override
@@ -77,7 +84,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		gray = inputFrame.gray();
 		
 		long startTime = System.nanoTime();
-		imageProcess(rgba.getNativeObjAddr(),gray.getNativeObjAddr(),templateMat.getNativeObjAddr(),templateKeypoints.getNativeObjAddr());
+		imageProcess(gray.getNativeObjAddr(),templateMat.getNativeObjAddr(),templateKeypoints.getNativeObjAddr(),templateDescriptors.getNativeObjAddr());
 		long endTime = System.nanoTime();
 		Log.e("info", "Native Code Time- " + (float)(endTime - startTime)/1E9);
 		return rgba;
