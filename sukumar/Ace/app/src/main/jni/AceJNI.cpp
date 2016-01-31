@@ -15,10 +15,10 @@ using namespace std;
 using namespace cv;
 
 extern "C" {
-JNIEXPORT void JNICALL Java_mobiledigitizer_core_MainActivity_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput);
+JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput);
 void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp);
 
-JNIEXPORT void JNICALL Java_mobiledigitizer_core_MainActivity_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput){
+JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput){
 //	__android_log_print(ANDROID_LOG_ERROR, "jni", "Entered Native Code2.0");
 
 	clock_t tStart;
@@ -152,8 +152,7 @@ void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp)
 //    CHECK_MAT(mat.type()==CV_32FC(7) && mat.cols==1);
     for(int i=0; i<mat.rows; i++)
     {
-        Vec<float, 7> v = mat.at< Vec<float, 7> >(i, 0);
-        KeyPoint kp(v[0], v[1], v[2], v[3], v[4], (int)v[5], (int)v[6]);
+        KeyPoint kp(mat.at<float>(i,0), mat.at<float>(i,1), mat.at<float>(i,2), mat.at<float>(i,3), mat.at<float>(i,4), (int)mat.at<float>(i,5), (int)mat.at<float>(i,6));
         v_kp.push_back(kp);
     }
     return;

@@ -1,3 +1,59 @@
+Configure OpenCv with Android Studio 
+http://stackoverflow.com/questions/21096819/jni-and-gradle-in-android-studio
+
+---------------------------------------------------------
+Gradle Task for running ndk-build.cmd
+
+task buildNative(type: Exec, description: 'Compile JNI source via NDK') {
+        commandLine "$ndkDir/ndk-build.cmd",
+                '-C', file('src/main/jni').absolutePath, // Change src/main/jni the relative path to your jni source
+                'NDK_LIBS_OUT='+ file('src/main/jniLibs').absolutePath,  // ** Imp
+                'NDK_OUT='+file('build').absolutePath,					 // ** Imp
+                '-j', Runtime.runtime.availableProcessors(),
+                'all',
+                'NDK_DEBUG=1'
+    }
+	
+--------------------------------------------------------	
+Error: Service Intent must be explicit: Intent { act=org.opencv.engine.BIND }
+
+Edit below function in ../OpenCV-2.4.11-android-sdk/sdk/java/src/org/opencv/android/AsyncServiceHelper.java
+
+public static boolean initOpenCV(String Version, final Context AppContext,
+        final LoaderCallbackInterface Callback) {
+    AsyncServiceHelper helper = new AsyncServiceHelper(Version, AppContext,
+            Callback);
+    Intent intent = new Intent("org.opencv.engine.BIND");
+    intent.setPackage("org.opencv.engine");
+    if (AppContext.bindService(intent, helper.mServiceConnection,
+            Context.BIND_AUTO_CREATE)) {
+        return true;
+    } else {
+        AppContext.unbindService(helper.mServiceConnection);
+        InstallService(AppContext, Callback);
+        return false;
+    }
+}
+
+
+Android Studio read local.properties file to get ndk directory
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def sdkDir = properties.getProperty('sdk.dir')
+def ndkDir = properties.getProperty('ndk.dir')
+
+-------------------------------------------
+
+Android Studio
+Allow use of deprecated NDK
+android.useDeprecatedNdk=true
+-------------------------------------------
+
+DDMS view - path to sdcard
+/mnt/shell/emulated/0/
+
+-------------------------------------------
 Types of FLANN based matcher
 
 cv::flann::Index GenFLANNIndex(cv::Mat keys)
