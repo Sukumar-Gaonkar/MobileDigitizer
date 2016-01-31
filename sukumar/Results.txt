@@ -1,0 +1,54 @@
+All below tests were performed on formFront1Min.jpg and formFront2Min.jpg
+
+Canny 
+Avg Time - 0.278s
+
+ORB Detector
+formFront1Min Img- 	0.717001s Keypoints - 500
+formFront1Min Canny-0.955466s Keypoints - 500
+formFront2Min Img- 	0.704330s Keypoints - 500
+formFront2Min Canny-0.963113s Keypoints - 500
+ 
+FAST Detector
+
+formFront1Min Img-	1.761142s Keypoints - 72191
+formFront1Min Canny-0.052886s Keypoints - 22442
+formFront2Min Img- 	1.842604s Keypoints - 75607
+formFront2Min Canny-0.055046s Keypoints - 23065
+
+Good Features To track Detector (GFTT)
+
+formFront1Min Img- 	1.596012s Keypoints - 1000
+formFront1Min Canny-1.327703s Keypoints - 1000
+formFront2Min Img- 	1.514506s Keypoints - 1000
+formFront2Min Canny-1.412887s Keypoints - 1000
+
+ORB detector + Brief Descriptor
+
+ORBDetector Canny Time - 0.967178s Keypoints - 500
+BriefDescriptor Canny Time - 0.083350s 
+ORBDetector Canny Time - 0.971982s Keypoints - 500
+BriefDescriptor Canny Time - 0.086318s 
+
+FAST detector + Brief Descriptor
+
+FastDetector Canny Time - 0.055359s Keypoints - 22442
+BriefDescriptor Canny Time - 0.231942s 
+FastDetector Canny Time - 0.056548s Keypoints - 23065
+BriefDescriptor Canny Time - 0.229063s 
+
+ORB detector + ORB Descriptor
+
+ORBDetector Canny Time - 0.958493s Keypoints - 500
+ORBDescriptor Canny Time - 0.949543s 
+ORBDetector Canny Time - 1.009124s Keypoints - 500
+ORBDescriptor Canny Time - 0.987481s 
+
+FAST detector + ORB Descriptor
+
+FastDetector Canny Time - 0.055036s Keypoints - 22442
+ORBDescriptor Canny Time - 13.148768s 
+FastDetector Canny Time - 0.056637s Keypoints - 23065
+ORBDescriptor Canny Time - 13.294501s 
+
+
