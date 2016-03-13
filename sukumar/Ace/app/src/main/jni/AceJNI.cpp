@@ -24,7 +24,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	clock_t tStart;
 
 	std::vector< DMatch > matches;
-	Mat grayCanny;
+	Mat grayCanny,grayCannyHolder;
 	Mat& gray = *(Mat*) addrGray;
 	Mat& output = *(Mat*) addrOutput;
 	Mat& rgba = *(Mat*) addrRgba;
@@ -39,18 +39,55 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 //	cvtColor(templateImg,templateImgGray,CV_BGR2GRAY);
 //	__android_log_print(ANDROID_LOG_ERROR, "info", "template CV_BGR2GRAY - %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
-	Canny(gray,grayCanny,50,100);
+	Canny(gray,grayCanny,50,150);
+//    dilate(grayCanny, grayCanny, Mat(), Point(-1, -1), 2, 1, 1);
 //	grayCanny = gray;
+    grayCannyHolder = grayCanny.clone();
 
 	tStart = clock();
 	Mat_to_vector_KeyPoint(templateKeypointMat,templateKeypoints);
 //	__android_log_print(ANDROID_LOG_ERROR, "info", "MatofKeypoint to vector - %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
-	OrbFeatureDetector detector;
-	OrbDescriptorExtractor descriptor;
+    OrbFeatureDetector detector;
+//    OrbDescriptorExtractor descriptor;
+//    FastFeatureDetector detector;
+    BriefDescriptorExtractor descriptor;
+
 	std::vector<KeyPoint> keypoints_1;
 	Mat descriptors_1;
 	FlannBasedMatcher matcher;
+
+	__android_log_print(ANDROID_LOG_ERROR, "info", "finding contours");
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	RNG rng(12345);
+	findContours( grayCanny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+	double maxBoundryArea = 0, doubleHolder;
+	int formContourIndex = -1;
+	Rect boundRect;
+
+	if(contours.size() > 1) {
+		vector <vector<Point> > contours_poly(contours.size());
+
+		for (size_t i = 0; i < contours.size(); i++) {
+			approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
+			doubleHolder = contourArea(contours_poly[i]);
+			if (doubleHolder > maxBoundryArea) {
+				maxBoundryArea = doubleHolder;
+				formContourIndex = i;
+			}
+		}
+		boundRect = boundingRect(Mat(contours_poly[formContourIndex]));
+		if(maxBoundryArea > 2) {
+			Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+			rectangle(rgba, boundRect.tl(), boundRect.br(), color, 2, 8, 0);
+		}
+	}
+	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),maxBoundryArea);
+
+	if(contours.size() > 1)
+		grayCanny = grayCanny(boundRect);
 
 	tStart = clock();
 	detector.detect(grayCanny,keypoints_1);
@@ -76,13 +113,13 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	matcher.match( descriptors_1, templateDescriptors, matches );
 //	__android_log_print(ANDROID_LOG_ERROR, "info", "Matcher- %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
-	double max_dist = 0; double min_dist = 100;
+	double max_dist = 0; double min_dist = 1000;
 	DMatch match;
 	int goodMatchCount = 0;
 	double AvgError = 0;
 	std::vector< DMatch > good_matches;
-
-	for( int i = 0; i < descriptors_1.rows; i++ )
+    __android_log_print(ANDROID_LOG_ERROR, "info", "Matches Size: %d",matches.size());
+	for( int i = 0; i < matches.size(); i++ )
 	{
 		match = matches[i];
 		double dist = match.distance;
@@ -93,62 +130,36 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	//-- or a small arbitary value ( 0.02 ) in the event that min_dist is very
 	//-- small)
 	//-- PS.- radiusMatch can also be used here.
-//	std::vector< DMatch > good_matches;
 	std::vector<Point2f> goodTemplateKeypoints;
-	std::vector<Point2f> goodFrameKeypoints;
+    std::vector<Point2f> goodFrameKeypoints;
 	KeyPoint keypointHolder;
-	for( int i = 0; i < descriptors_1.rows; i++ )
+	for( int i = 0; i < matches.size(); i++ )
 	{
 		match = matches[i];
 		if( match.distance <= max(3*min_dist, 0.02) )
 		{
-
 			goodMatchCount++;
 			AvgError += match.distance;
-//			good_matches.push_back(match);
+			good_matches.push_back(match);
 			keypointHolder = keypoints_1[match.queryIdx];
-			goodFrameKeypoints.push_back( keypointHolder.pt );
+			goodFrameKeypoints.push_back(keypointHolder.pt);
 			keypointHolder = templateKeypoints[match.trainIdx];
 			goodTemplateKeypoints.push_back(keypointHolder.pt);
 		}
 	}
 
 	AvgError /= goodMatchCount;
-//	__android_log_print(ANDROID_LOG_ERROR, "info", "min - %f max - %f\n",min_dist,max_dist);
-	vector<vector<Point> > contours;
-	vector<Vec4i> hierarchy;
-	RNG rng(12345);
-	findContours( grayCanny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
-//	for( int i = 0; i< contours.size(); i++ )
-//	{
-//		Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-//		drawContours( rgba, contours, i, color, 2, 8, hierarchy, 0, Point() );
-//	}
+	__android_log_print(ANDROID_LOG_ERROR, "info", "min - %f max - %f\n",min_dist,max_dist);
 
-	vector<vector<Point> > contours_poly( contours.size() );
-	vector<Rect> boundRect( contours.size() );
+	__android_log_print(ANDROID_LOG_ERROR, "info", "Good Matches - %d Avg Error- %fs CannySize %d\n",goodMatchCount, AvgError,grayCanny.rows);
+//	drawKeypoints( grayCanny, goodFrameKeypoints, grayCanny, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+//	drawKeypoints( templateImgGray, goodTemplateKeypoints, templateImgGray, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+    gray = gray(boundRect);
+	drawMatches( gray, keypoints_1, templateImgGray, templateKeypoints,good_matches, output, Scalar::all(-1), Scalar::all(-1),vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
-	for( size_t i = 0; i < contours.size(); i++ )
-	{
-		approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
-		boundRect[i] = boundingRect( Mat(contours_poly[i]) );
-	}
-	for( size_t i = 0; i< contours.size(); i++ )
-	{
-		Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-		rectangle( rgba, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
-	}
-	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d",contours.size());
-//	__android_log_print(ANDROID_LOG_ERROR, "info", "Good Matches - %d Avg Error- %fs\n",goodMatchCount, AvgError);
-//	drawKeypoints( grayCanny, keypoints_1, grayCanny, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
-//	drawKeypoints( templateImgGray, keypoints_1, templateImgGray, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
-//	drawMatches( grayCanny, keypoints_1, templateImgGray, templateKeypoints,good_matches, output, Scalar::all(-1), Scalar::all(-1),vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
-//	__android_log_print(ANDROID_LOG_ERROR, "info", "checkpoint 1");
-/*
 	if(goodTemplateKeypoints.size() > 3 && goodFrameKeypoints.size() > 3)
 	{
-		__android_log_print(ANDROID_LOG_ERROR, "info", "checkpoint 2");
 		Mat H = findHomography( goodTemplateKeypoints, goodFrameKeypoints, CV_RANSAC );
 
 		//-- Get the corners from the image_1 ( the object to be "detected" )
@@ -166,10 +177,10 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 		line( rgba, point1 + Point2f( templateImgGray.cols, 0), point2 + Point2f( templateImgGray.cols, 0), Scalar( 0, 255, 0), 10 ,8,0);
 		line( rgba, point2 + Point2f( templateImgGray.cols, 0), point3 + Point2f( templateImgGray.cols, 0), Scalar( 0, 255, 0), 10,8,0 );
 		line( rgba, point3 + Point2f( templateImgGray.cols, 0), point0 + Point2f( templateImgGray.cols, 0), Scalar( 0, 255, 0), 10 ,8,0);
-		__android_log_print(ANDROID_LOG_ERROR, "info", "%f-%f %f-%f",point0.x,point0.y,point1.x,point1.y);
+//		__android_log_print(ANDROID_LOG_ERROR, "info", "%f-%f %f-%f",point0.x,point0.y,point1.x,point1.y);
 	}
-*/
-//    rgba = grayCanny;
+
+//    rgba = grayCannyHolder;
 }
 
 void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp)

@@ -42,7 +42,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
                     mOpenCvCameraView.enableView();
 
                     FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
-                    DescriptorExtractor descriptor = DescriptorExtractor.create(DescriptorExtractor.ORB) ;
+                    DescriptorExtractor descriptor = DescriptorExtractor.create(DescriptorExtractor.BRIEF) ;
                     templateKeypoints = new MatOfKeyPoint();
                     templateDescriptors = new Mat();
                     templateCanny = new Mat();
@@ -51,10 +51,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
                     Imgproc.resize(templateMatBig, templateMat, new Size(1920, 1080));
 //                    Log.e("info", PicturesDir+"/formFront1Min.jpg");
 //                    long startTime = System.nanoTime();
-                    Imgproc.Canny(templateMat, templateCanny, 50,150);
+                    Imgproc.Canny(templateMat, templateCanny, 50, 150);
 //                    templateCanny = templateMat;
                     Highgui.imwrite(PicturesDir+"/canny.jpg", templateCanny);
                     detector.detect(templateCanny, templateKeypoints);
+                    Log.e("info", templateKeypoints.size().toString());
 //                    long endTime = System.nanoTime(); Log.e("info", "Detection- " + (float)(endTime - startTime)/1E9);
 //                    startTime = System.nanoTime();
                     descriptor.compute(templateCanny, templateKeypoints, templateDescriptors);
@@ -141,36 +142,3 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
         return super.onOptionsItemSelected(item);
     }
 }
-/*
-
-public class MainActivity extends AppCompatActivity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-}
-*/
