@@ -39,6 +39,8 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 //	cvtColor(templateImg,templateImgGray,CV_BGR2GRAY);
 //	__android_log_print(ANDROID_LOG_ERROR, "info", "template CV_BGR2GRAY - %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
+//	gray = templateImgGray;
+
 	Canny(gray,grayCanny,50,150);
 //    dilate(grayCanny, grayCanny, Mat(), Point(-1, -1), 2, 1, 1);
 //	grayCanny = gray;
@@ -57,7 +59,6 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	Mat descriptors_1;
 	FlannBasedMatcher matcher;
 
-	__android_log_print(ANDROID_LOG_ERROR, "info", "finding contours");
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	RNG rng(12345);
@@ -84,17 +85,18 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 			rectangle(rgba, boundRect.tl(), boundRect.br(), color, 2, 8, 0);
 		}
 	}
-	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),maxBoundryArea);
+//	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),maxBoundryArea);
 
 	if(contours.size() > 1)
-		grayCanny = grayCanny(boundRect);
+		gray = gray(boundRect);
+
 
 	tStart = clock();
-	detector.detect(grayCanny,keypoints_1);
+	detector.detect(gray,keypoints_1);
 //	__android_log_print(ANDROID_LOG_ERROR, "info", "Keypoint detection time- %fs Keypoints- %d\n", (double)(clock() - tStart)/CLOCKS_PER_SEC,keypoints_1.size());
 
 	tStart = clock();
-	descriptor.compute(grayCanny,keypoints_1,descriptors_1);
+	descriptor.compute(gray,keypoints_1,descriptors_1);
 //	__android_log_print(ANDROID_LOG_ERROR, "info", "Keypoint description time- %fs Keypoints - %d\n", (double)(clock() - tStart)/CLOCKS_PER_SEC,keypoints_1.size());
 
 	tStart = clock();
@@ -118,7 +120,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	int goodMatchCount = 0;
 	double AvgError = 0;
 	std::vector< DMatch > good_matches;
-    __android_log_print(ANDROID_LOG_ERROR, "info", "Matches Size: %d",matches.size());
+
 	for( int i = 0; i < matches.size(); i++ )
 	{
 		match = matches[i];
@@ -136,7 +138,8 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	for( int i = 0; i < matches.size(); i++ )
 	{
 		match = matches[i];
-		if( match.distance <= max(3*min_dist, 0.02) )
+//		if( match.distance <= max(3*min_dist, 0.02) )
+		if( match.distance <= 200 )
 		{
 			goodMatchCount++;
 			AvgError += match.distance;
@@ -151,10 +154,10 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	AvgError /= goodMatchCount;
 	__android_log_print(ANDROID_LOG_ERROR, "info", "min - %f max - %f\n",min_dist,max_dist);
 
-	__android_log_print(ANDROID_LOG_ERROR, "info", "Good Matches - %d Avg Error- %fs CannySize %d\n",goodMatchCount, AvgError,grayCanny.rows);
+	__android_log_print(ANDROID_LOG_ERROR, "info", "Good Matches - %d Avg Error- %f\n",goodMatchCount, AvgError);
 //	drawKeypoints( grayCanny, goodFrameKeypoints, grayCanny, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
 //	drawKeypoints( templateImgGray, goodTemplateKeypoints, templateImgGray, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
-    gray = gray(boundRect);
+//    gray = gray(boundRect);
 	drawMatches( gray, keypoints_1, templateImgGray, templateKeypoints,good_matches, output, Scalar::all(-1), Scalar::all(-1),vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
 

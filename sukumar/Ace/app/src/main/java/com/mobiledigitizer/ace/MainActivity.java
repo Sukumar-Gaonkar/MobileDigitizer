@@ -14,6 +14,7 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Size;
@@ -47,12 +48,20 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
                     templateDescriptors = new Mat();
                     templateCanny = new Mat();
                     templateMat = new Mat();
-                    templateMatBig = Highgui.imread(PicturesDir+"/universityReceipt.jpg",Highgui.CV_LOAD_IMAGE_GRAYSCALE);
-                    Imgproc.resize(templateMatBig, templateMat, new Size(1920, 1080));
+                    templateMatBig = Highgui.imread(PicturesDir+"/templateTestForm.jpg",Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+
+                    if(templateMatBig.height() > templateMatBig.width())
+                    {
+                        templateMatBig = templateMatBig.t();
+                        Core.flip(templateMatBig,templateMatBig,0);
+                    }
+                    int h =(int)( (double)templateMatBig.height()/templateMatBig.width() * 1920);
+                    Imgproc.resize(templateMatBig, templateMat, new Size(1920, h));
+
 //                    Log.e("info", PicturesDir+"/formFront1Min.jpg");
 //                    long startTime = System.nanoTime();
-                    Imgproc.Canny(templateMat, templateCanny, 50, 150);
-//                    templateCanny = templateMat;
+//                    Imgproc.Canny(templateMat, templateCanny, 50, 150);
+                    templateCanny = templateMat;
                     Highgui.imwrite(PicturesDir+"/canny.jpg", templateCanny);
                     detector.detect(templateCanny, templateKeypoints);
                     Log.e("info", templateKeypoints.size().toString());
