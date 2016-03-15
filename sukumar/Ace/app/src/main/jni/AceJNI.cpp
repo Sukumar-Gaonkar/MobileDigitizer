@@ -5,6 +5,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include "opencv2/highgui/highgui.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/nonfree/nonfree.hpp>
 
 #include <time.h>
 #include <typeinfo>
@@ -50,10 +51,14 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	Mat_to_vector_KeyPoint(templateKeypointMat,templateKeypoints);
 //	__android_log_print(ANDROID_LOG_ERROR, "info", "MatofKeypoint to vector - %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
-    OrbFeatureDetector detector;
+//    SiftFeatureDetector detector;
+//    OrbFeatureDetector detector;
 //    OrbDescriptorExtractor descriptor;
 //    FastFeatureDetector detector;
-    BriefDescriptorExtractor descriptor;
+    SurfFeatureDetector detector;
+    SiftDescriptorExtractor descriptor;
+//    SurfDescriptorExtractor descriptor;
+//    BriefDescriptorExtractor descriptor;
 
 	std::vector<KeyPoint> keypoints_1;
 	Mat descriptors_1;
@@ -138,8 +143,8 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	for( int i = 0; i < matches.size(); i++ )
 	{
 		match = matches[i];
-//		if( match.distance <= max(3*min_dist, 0.02) )
-		if( match.distance <= 200 )
+		if( match.distance <= max(2*min_dist, 0.02) )
+//		if( match.distance <= 100 )
 		{
 			goodMatchCount++;
 			AvgError += match.distance;

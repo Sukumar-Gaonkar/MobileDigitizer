@@ -39,11 +39,13 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
                 case LoaderCallbackInterface.SUCCESS:
                 {
                     Log.i("status", "OpenCV loaded successfully");
+                    System.loadLibrary("gnustl_shared");
+                    System.loadLibrary("nonfree");
                     System.loadLibrary("AceNativeLib");
                     mOpenCvCameraView.enableView();
 
-                    FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
-                    DescriptorExtractor descriptor = DescriptorExtractor.create(DescriptorExtractor.BRIEF) ;
+                    FeatureDetector detector = FeatureDetector.create(FeatureDetector.SURF);
+                    DescriptorExtractor descriptor = DescriptorExtractor.create(DescriptorExtractor.SIFT) ;
                     templateKeypoints = new MatOfKeyPoint();
                     templateDescriptors = new Mat();
                     templateCanny = new Mat();
@@ -53,7 +55,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
                     if(templateMatBig.height() > templateMatBig.width())
                     {
                         templateMatBig = templateMatBig.t();
-                        Core.flip(templateMatBig,templateMatBig,0);
+                        Core.flip(templateMatBig, templateMatBig, 0);
                     }
                     int h =(int)( (double)templateMatBig.height()/templateMatBig.width() * 1920);
                     Imgproc.resize(templateMatBig, templateMat, new Size(1920, h));
