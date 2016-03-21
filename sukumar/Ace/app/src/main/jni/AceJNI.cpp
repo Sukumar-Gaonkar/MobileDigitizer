@@ -88,7 +88,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 		boundRect = boundingRect(Mat(contours[formContourIndex]));
 		if(maxBoundryArea > 2) {
 			Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-			rectangle(gray, boundRect.tl(), boundRect.br(), color, 2, 8, 0);
+			rectangle(rgba, boundRect.tl(), boundRect.br(), color, 2, 8, 0);
 		}
 	}
 	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),maxBoundryArea);
@@ -199,16 +199,16 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 //	136,515 1410,526 1388,1165 121,1154
 	std::vector<Point2f> boxOriginal(4);
 	std::vector<Point2f> scene_corners(4);
-//	boxOriginal[0] = Point(515,136);
-//	boxOriginal[1] = Point(526,1410);
-//	boxOriginal[2] = Point(1165,1388);
-//	boxOriginal[3] = Point(1154,121);
+	boxOriginal[0] = Point(515,136);
+	boxOriginal[1] = Point(526,1410);
+	boxOriginal[2] = Point(1165,1388);
+	boxOriginal[3] = Point(1154,121);
 
 
-    boxOriginal[0] = Point(136,515);
-    boxOriginal[1] = Point(1410,526);
-    boxOriginal[2] = Point(1388,1165);
-    boxOriginal[3] = Point(121,1154);
+//    boxOriginal[0] = Point(136,515);
+//    boxOriginal[1] = Point(1410,526);
+//    boxOriginal[2] = Point(1388,1165);
+//    boxOriginal[3] = Point(121,1154);
 
 
 	perspectiveTransform( boxOriginal, scene_corners, H);
@@ -217,10 +217,10 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 	Point2f point1 = scene_corners[1];
 	Point2f point2 = scene_corners[2];
 	Point2f point3 = scene_corners[3];
-	line( gray, point0, point1 , Scalar(0, 255, 0),10,8,0);
-	line( gray, point1, point2, Scalar( 0, 255, 0), 10 ,8,0);
-	line( gray, point2, point3, Scalar( 0, 255, 0), 10,8,0 );
-	line( gray, point3, point0, Scalar( 0, 255, 0), 10 ,8,0);
+	line( rgba, point0, point1 , Scalar(0, 255, 0),1,8,0);
+	line( rgba, point1, point2, Scalar( 0, 255, 0), 1 ,8,0);
+	line( rgba, point2, point3, Scalar( 0, 255, 0), 1,8,0 );
+	line( rgba, point3, point0, Scalar( 0, 255, 0), 1 ,8,0);
 
 /*******Side by Side Mapping*******************
     Mat imgMatches(templateImgGray.rows+gray.rows,templateImgGray.cols+gray.cols,CV_8UC1);
@@ -229,17 +229,18 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
     Mat right(imgMatches, Rect(templateImgGray.cols, 0, gray.cols, gray.rows)); // Copy constructor
     gray.copyTo(right);
 
-    line( imgMatches, templateCorners[0] ,frameCorners[0] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
-    line( imgMatches, templateCorners[1] ,frameCorners[1] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
-    line( imgMatches, templateCorners[2] ,frameCorners[2] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
-    line( imgMatches, templateCorners[3] ,frameCorners[3] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, boxOriginal[0] ,scene_corners[0] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, boxOriginal[1] ,scene_corners[1] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, boxOriginal[2] ,scene_corners[2] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, boxOriginal[3] ,scene_corners[3] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    output = imgMatches;
 
     resize(imgMatches,gray,Size(gray.cols,gray.rows));
 
-    __android_log_print(ANDROID_LOG_ERROR, "info", "Template X %f %f %f %f\n",templateCorners[0].x,templateCorners[1].x,templateCorners[2].x,templateCorners[3].x);
-    __android_log_print(ANDROID_LOG_ERROR, "info", "Template Y %f %f %f %f\n",templateCorners[0].y,templateCorners[1].y,templateCorners[2].y,templateCorners[3].y);
-    __android_log_print(ANDROID_LOG_ERROR, "info", "frame X %f %f %f %f\n",frameCorners[0].x,frameCorners[1].x,frameCorners[2].x,frameCorners[3].x);
-    __android_log_print(ANDROID_LOG_ERROR, "info", "frame Y %f %f %f %f\n",frameCorners[0].y,frameCorners[1].y,frameCorners[2].y,frameCorners[3].y);
+//    __android_log_print(ANDROID_LOG_ERROR, "info", "Template X %f %f %f %f\n",boxOriginal[0].x,boxOriginal[1].x,boxOriginal[2].x,boxOriginal[3].x);
+//    __android_log_print(ANDROID_LOG_ERROR, "info", "Template Y %f %f %f %f\n",boxOriginal[0].y,boxOriginal[1].y,boxOriginal[2].y,boxOriginal[3].y);
+//    __android_log_print(ANDROID_LOG_ERROR, "info", "frame X %f %f %f %f\n",scene_corners[0].x,scene_corners[1].x,scene_corners[2].x,scene_corners[3].x);
+//    __android_log_print(ANDROID_LOG_ERROR, "info", "frame Y %f %f %f %f\n",scene_corners[0].y,scene_corners[1].y,scene_corners[2].y,scene_corners[3].y);
 ***********************/
 
 

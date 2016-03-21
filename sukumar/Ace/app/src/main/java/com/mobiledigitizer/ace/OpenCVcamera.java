@@ -10,8 +10,10 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Size;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.highgui.Highgui;
@@ -45,15 +47,15 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
                     templateCanny = new Mat();
                     templateMat = new Mat();
                     templateMatBig = Highgui.imread(PicturesDir + "/templateICCPCT.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
-/*
+
                     if(templateMatBig.height() > templateMatBig.width())
                     {
                         templateMatBig = templateMatBig.t();
                         Core.flip(templateMatBig, templateMatBig, 0);
                     }
-                    int h =(int)( (double)templateMatBig.height()/templateMatBig.width() * 1920);
-                    Imgproc.resize(templateMatBig, templateMat, new Size(1920, h));
-*/
+//                    int h =(int)( (double)templateMatBig.height()/templateMatBig.width() * 1920);
+//                    Imgproc.resize(templateMatBig, templateMat, new Size(1920, h));
+
 //                    Log.e("info", PicturesDir+"/formFront1Min.jpg");
 //                    long startTime = System.nanoTime();
 //                    Imgproc.Canny(templateMat, templateCanny, 50, 150);
@@ -117,19 +119,10 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
             output = new Mat();
 //            Highgui.imwrite(PicturesDir + "/inputOriginal.jpg", rgbaHolder);
             imageProcess(rgba.getNativeObjAddr(), gray.getNativeObjAddr(), templateCanny.getNativeObjAddr(), templateKeypoints.getNativeObjAddr(), templateDescriptors.getNativeObjAddr(), output.getNativeObjAddr());
-//                        Highgui.imwrite(PicturesDir + "/op.jpg", output);
+//            Highgui.imwrite(PicturesDir + "/op.jpg", output);
             Highgui.imwrite(PicturesDir+"/op2.jpg", rgbaHolder);
         }
-
-//        long startTime = System.nanoTime();
-//        imageProcess(rgba.getNativeObjAddr(),gray.getNativeObjAddr(),templateCanny.getNativeObjAddr(),templateKeypoints.getNativeObjAddr(),templateDescriptors.getNativeObjAddr(),output.getNativeObjAddr());
-//        long endTime = System.nanoTime();
-//        Log.e("info", "Native Code Time- " + (float)(endTime - startTime)/1E9);
-//        Highgui.imwrite(PicturesDir+"/op.jpg", output);
-
-//        Imgproc.resize(gray,rgba,rgba.size());
-
-        return gray;
+        return rgba;
     }
 
 
