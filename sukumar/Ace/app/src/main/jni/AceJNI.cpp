@@ -16,11 +16,11 @@ using namespace std;
 using namespace cv;
 
 extern "C" {
-JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput);
+JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput);
 void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp);
 bool comapreDMatch(DMatch match1,DMatch match2);
 
-JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput){
+JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput){
 //	__android_log_print(ANDROID_LOG_ERROR, "jni", "Entered Native Code2.0");
 
 	clock_t tStart;
@@ -73,9 +73,9 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	double maxBoundryArea = 0, doubleHolder;
 	int formContourIndex = -1;
 	Rect boundRect;
+	vector <vector<Point> > contours_poly(contours.size());
 
 	if(contours.size() > 1) {
-		vector <vector<Point> > contours_poly(contours.size());
 
 		for (size_t i = 0; i < contours.size(); i++) {
 			approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
@@ -93,8 +93,8 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	}
 	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),maxBoundryArea);
 
-	if(contours.size() > 1)
-        gray = gray(boundRect);
+//	if(contours.size() > 1)
+//        gray = gray(boundRect);
 
 /*
 
@@ -180,19 +180,36 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 //	drawMatches( gray, keypoints_1, templateImgGray, templateKeypoints,good_matches, output, Scalar::all(-1), Scalar::all(-1),vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
 ///*************************************************
-    std::vector<Point> templateCorners(4);
-    std::vector<Point> frameCorners = contours_poly[formContourIndex];
-    templateCorners[0] = Point(0,0); templateCorners[1] = Point( templateImgGray.cols, 0 );
-    templateCorners[2] = Point( templateImgGray.cols, templateImgGray.rows ); templateCorners[3] = Point( 0, templateImgGray.rows );
-    __android_log_print(ANDROID_LOG_ERROR, "info", "template - %d frame- %d\n",templateCorners.size(), frameCorners.size());
+
+    std::vector<Point2f> frameCorners(4);// = contours_poly[formContourIndex];
+
+    frameCorners[0] = Point2f (boundRect.tl().x,boundRect.tl().y); frameCorners[1] = Point2f( boundRect.tl().x + boundRect.width, boundRect.tl().y );
+    frameCorners[2] = Point2f( boundRect.br().x,boundRect.br().y ); frameCorners[3] = Point2f(boundRect.tl().x, boundRect.tl().y+boundRect.height );
+
+    std::vector<Point2f> templateCorners(4);
+
+    templateCorners[0] = Point2f (0,0); templateCorners[1] = Point2f( templateImgGray.cols, 0 );
+    templateCorners[2] = Point2f( templateImgGray.cols, templateImgGray.rows ); templateCorners[3] = Point2f( 0, templateImgGray.rows );
+
+//    int npoints = templateCorners.getMat().checkVector(2);
+//    int npoin = frameCorners.getMat().checkVector(2);
+//    __android_log_print(ANDROID_LOG_ERROR, "info", "template check vector - %d frame check vector- %d\n",npoints,npoin);
     Mat H = findHomography( templateCorners, frameCorners, CV_RANSAC );
+
 //	136,515 1410,526 1388,1165 121,1154
 	std::vector<Point2f> boxOriginal(4);
 	std::vector<Point2f> scene_corners(4);
-	boxOriginal[0] = Point(515,136);
-	boxOriginal[1] = Point(526,1410);
-	boxOriginal[2] = Point(1165,1388);
-	boxOriginal[3] = Point(1154,121);
+//	boxOriginal[0] = Point(515,136);
+//	boxOriginal[1] = Point(526,1410);
+//	boxOriginal[2] = Point(1165,1388);
+//	boxOriginal[3] = Point(1154,121);
+
+
+    boxOriginal[0] = Point(136,515);
+    boxOriginal[1] = Point(1410,526);
+    boxOriginal[2] = Point(1388,1165);
+    boxOriginal[3] = Point(121,1154);
+
 
 	perspectiveTransform( boxOriginal, scene_corners, H);
 	//-- Draw lines between the corners (the mapped object in the scene - image_2 )
@@ -200,12 +217,33 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_MainActivity_imageProcess(JN
 	Point2f point1 = scene_corners[1];
 	Point2f point2 = scene_corners[2];
 	Point2f point3 = scene_corners[3];
-	line( gray, point0 + Point2f( templateImgGray.cols, 0), point1 + Point2f( templateImgGray.cols, 0), Scalar(0, 255, 0),10,8,0);
-	line( gray, point1 + Point2f( templateImgGray.cols, 0), point2 + Point2f( templateImgGray.cols, 0), Scalar( 0, 255, 0), 10 ,8,0);
-	line( gray, point2 + Point2f( templateImgGray.cols, 0), point3 + Point2f( templateImgGray.cols, 0), Scalar( 0, 255, 0), 10,8,0 );
-	line( gray, point3 + Point2f( templateImgGray.cols, 0), point0 + Point2f( templateImgGray.cols, 0), Scalar( 0, 255, 0), 10 ,8,0);
+	line( gray, point0, point1 , Scalar(0, 255, 0),10,8,0);
+	line( gray, point1, point2, Scalar( 0, 255, 0), 10 ,8,0);
+	line( gray, point2, point3, Scalar( 0, 255, 0), 10,8,0 );
+	line( gray, point3, point0, Scalar( 0, 255, 0), 10 ,8,0);
 
- //*****************************************************/
+/*******Side by Side Mapping*******************
+    Mat imgMatches(templateImgGray.rows+gray.rows,templateImgGray.cols+gray.cols,CV_8UC1);
+    Mat left(imgMatches, Rect(0, 0, templateImgGray.cols, templateImgGray.rows)); // Copy constructor
+    templateImgGray.copyTo(left);
+    Mat right(imgMatches, Rect(templateImgGray.cols, 0, gray.cols, gray.rows)); // Copy constructor
+    gray.copyTo(right);
+
+    line( imgMatches, templateCorners[0] ,frameCorners[0] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, templateCorners[1] ,frameCorners[1] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, templateCorners[2] ,frameCorners[2] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, templateCorners[3] ,frameCorners[3] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+
+    resize(imgMatches,gray,Size(gray.cols,gray.rows));
+
+    __android_log_print(ANDROID_LOG_ERROR, "info", "Template X %f %f %f %f\n",templateCorners[0].x,templateCorners[1].x,templateCorners[2].x,templateCorners[3].x);
+    __android_log_print(ANDROID_LOG_ERROR, "info", "Template Y %f %f %f %f\n",templateCorners[0].y,templateCorners[1].y,templateCorners[2].y,templateCorners[3].y);
+    __android_log_print(ANDROID_LOG_ERROR, "info", "frame X %f %f %f %f\n",frameCorners[0].x,frameCorners[1].x,frameCorners[2].x,frameCorners[3].x);
+    __android_log_print(ANDROID_LOG_ERROR, "info", "frame Y %f %f %f %f\n",frameCorners[0].y,frameCorners[1].y,frameCorners[2].y,frameCorners[3].y);
+***********************/
+
+
+    //*****************************************************/
 
 /*
 	if(goodTemplateKeypoints.size() > 3 && goodFrameKeypoints.size() > 3)

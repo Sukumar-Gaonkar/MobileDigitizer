@@ -1,13 +1,33 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     xmlns:opencv="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <org.opencv.android.JavaCameraView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        opencv:show_fps="true"
-        android:id="@+id/javaCameraView" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Matching"
+        android:id="@+id/matchingButton"
+        android:clickable="true"
+        android:onClick="startMatching"
+        android:layout_marginTop="80dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OCR"
+        android:id="@+id/ocrButton"
+        android:clickable="true"
+        android:onClick="startOCRActivity"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="80dp"
+        android:layout_alignRight="@+id/matchingButton"
+        android:layout_alignEnd="@+id/matchingButton"
+        android:layout_alignLeft="@+id/matchingButton"
+        android:layout_alignStart="@+id/matchingButton" />
 </RelativeLayout>
