@@ -16,11 +16,11 @@ using namespace std;
 using namespace cv;
 
 extern "C" {
-JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput);
+JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput,jintArray markupAddr);
 void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp);
 bool comapreDMatch(DMatch match1,DMatch match2);
 
-JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput){
+JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput,jintArray markupAddr){
 //	__android_log_print(ANDROID_LOG_ERROR, "jni", "Entered Native Code2.0");
 
 	clock_t tStart;
@@ -34,6 +34,9 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 	Mat& templateDescriptors = *(Mat*) addrTemplateDescriptors;
 	vector<KeyPoint> templateKeypoints;
 	Mat& templateImgGray =  *(Mat*) addrTemplateMat;
+
+	jsize makrupLen = env->GetArrayLength(markupAddr);
+	jint *markup = env->GetIntArrayElements(markupAddr, 0);
 
 //	Mat templateImgGray;
 //	Mat& templateImg = *(Mat*) addrTemplateMat;
@@ -147,7 +150,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 		if( dist > max_dist ) max_dist = dist;
 	}
 	//-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
-	//-- or a small arbitary value ( 0.02 ) in the event that min_dist is very
+	//-- or a small arbitrary value ( 0.02 ) in the event that min_dist is very
 	//-- small)
 	//-- PS.- radiusMatch can also be used here.
 	std::vector<Point2f> goodTemplateKeypoints;
@@ -196,31 +199,53 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 //    __android_log_print(ANDROID_LOG_ERROR, "info", "template check vector - %d frame check vector- %d\n",npoints,npoin);
     Mat H = findHomography( templateCorners, frameCorners, CV_RANSAC );
 
-//	136,515 1410,526 1388,1165 121,1154
-	std::vector<Point2f> boxOriginal(4);
-	std::vector<Point2f> scene_corners(4);
-	boxOriginal[0] = Point(515,136);
-	boxOriginal[1] = Point(526,1410);
-	boxOriginal[2] = Point(1165,1388);
-	boxOriginal[3] = Point(1154,121);
+    std::vector<vector<Point2f> > mappingConatiner;
+    std::vector<Point2f> templateDigitizeSection(2);
+    std::vector<Point2f> frameDigitizeSection(2);
 
+	for (int i=0; i<makrupLen; i+=4){
 
-//    boxOriginal[0] = Point(136,515);
-//    boxOriginal[1] = Point(1410,526);
-//    boxOriginal[2] = Point(1388,1165);
-//    boxOriginal[3] = Point(121,1154);
+		templateDigitizeSection[0] = Point2f(markup[i+1],markup[i]);
+		templateDigitizeSection[1] = Point2f(markup[i+3],markup[i+2]);
+		perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
+		rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
 
+	}
+    /*
+	{
+        templateDigitizeSection[0] = Point2f(691,588);
+        templateDigitizeSection[1] = Point2f(766,1021);
+        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
+        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
 
-	perspectiveTransform( boxOriginal, scene_corners, H);
-	//-- Draw lines between the corners (the mapped object in the scene - image_2 )
-	Point2f point0 = scene_corners[0];
-	Point2f point1 = scene_corners[1];
-	Point2f point2 = scene_corners[2];
-	Point2f point3 = scene_corners[3];
-	line( rgba, point0, point1 , Scalar(0, 255, 0),1,8,0);
-	line( rgba, point1, point2, Scalar( 0, 255, 0), 1 ,8,0);
-	line( rgba, point2, point3, Scalar( 0, 255, 0), 1,8,0 );
-	line( rgba, point3, point0, Scalar( 0, 255, 0), 1 ,8,0);
+        templateDigitizeSection[0] = Point2f(766,588);
+        templateDigitizeSection[1] = Point2f(840,1021);
+        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
+        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
+
+        templateDigitizeSection[0] = Point2f(1020,587);
+        templateDigitizeSection[1] = Point2f(1092,1020);
+        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
+        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
+
+        templateDigitizeSection[0] = Point2f(1020,151);
+        templateDigitizeSection[1] = Point2f(1092,587);
+        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
+        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
+
+        templateDigitizeSection[0] = Point2f(1165,587);
+        templateDigitizeSection[1] = Point2f(1240,1020);
+        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
+        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
+
+        templateDigitizeSection[0] = Point2f(1240,587);
+        templateDigitizeSection[1] = Point2f(1310,1020);
+        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
+        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
+
+    }
+	*/
+
 
 /*******Side by Side Mapping*******************
     Mat imgMatches(templateImgGray.rows+gray.rows,templateImgGray.cols+gray.cols,CV_8UC1);
@@ -229,22 +254,19 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
     Mat right(imgMatches, Rect(templateImgGray.cols, 0, gray.cols, gray.rows)); // Copy constructor
     gray.copyTo(right);
 
-    line( imgMatches, boxOriginal[0] ,scene_corners[0] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
-    line( imgMatches, boxOriginal[1] ,scene_corners[1] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
-    line( imgMatches, boxOriginal[2] ,scene_corners[2] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
-    line( imgMatches, boxOriginal[3] ,scene_corners[3] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, templateDigitizeSection[0] ,frameDigitizeSection[0] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+    line( imgMatches, templateDigitizeSection[1] ,frameDigitizeSection[1] + Point2f(templateImgGray.cols,0), Scalar(0, 255, 0),10,8,0);
+
     output = imgMatches;
 
-    resize(imgMatches,gray,Size(gray.cols,gray.rows));
+    resize(imgMatches,rgba,Size(rgba.cols,rgba.rows));
 
 //    __android_log_print(ANDROID_LOG_ERROR, "info", "Template X %f %f %f %f\n",boxOriginal[0].x,boxOriginal[1].x,boxOriginal[2].x,boxOriginal[3].x);
 //    __android_log_print(ANDROID_LOG_ERROR, "info", "Template Y %f %f %f %f\n",boxOriginal[0].y,boxOriginal[1].y,boxOriginal[2].y,boxOriginal[3].y);
 //    __android_log_print(ANDROID_LOG_ERROR, "info", "frame X %f %f %f %f\n",scene_corners[0].x,scene_corners[1].x,scene_corners[2].x,scene_corners[3].x);
 //    __android_log_print(ANDROID_LOG_ERROR, "info", "frame Y %f %f %f %f\n",scene_corners[0].y,scene_corners[1].y,scene_corners[2].y,scene_corners[3].y);
-***********************/
 
-
-    //*****************************************************/
+*****************************************************/
 
 /*
 	if(goodTemplateKeypoints.size() > 3 && goodFrameKeypoints.size() > 3)
@@ -290,4 +312,25 @@ bool comapreDMatch(DMatch match1,DMatch match2)
     return match1.distance < match2.distance;
 }
 
+/**********Data*********
+TemplateDemoForm Sections to digitize
+    Value section
+    588,691 - 1021,766
+    588,766 - 1021,840
+
+    587,1020 - 1020,1092
+    587,1092 - 1020,1165
+    587,1165 - 1020,1240
+    587,1240 - 1020,1310
+
+    Key Section
+    151,1020 - 587,1092 (Groundnut)
+
+TemplateICCPCT big area
+    136,515 1410,526 1388,1165 121,1154
+
+ ***********************/
+
 }
+
+

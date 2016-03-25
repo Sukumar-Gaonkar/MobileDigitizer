@@ -19,13 +19,18 @@ import org.opencv.features2d.FeatureDetector;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Scanner;
+
 public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     private CameraBridgeViewBase   	mOpenCvCameraView;
     Mat 							rgba,rgbaHolder,gray,templateMat,templateMatBig,templateDescriptors,templateCanny,output;
     MatOfKeyPoint templateKeypoints;
     String PicturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
-    public native void imageProcess(long matAddrRgba,long matAddrGray,long templateMat,long templateKeypoints,long templateDescriptors,long addrOutput);
+    int[] coordinates;
+    public native void imageProcess(long matAddrRgba,long matAddrGray,long templateMat,long templateKeypoints,long templateDescriptors,long addrOutput,int[] markup);
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -46,7 +51,7 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
                     templateDescriptors = new Mat();
                     templateCanny = new Mat();
                     templateMat = new Mat();
-                    templateMatBig = Highgui.imread(PicturesDir + "/templateICCPCT.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+                    templateMatBig = Highgui.imread(PicturesDir + "/templateDemoForm.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
 
                     if(templateMatBig.height() > templateMatBig.width())
                     {
@@ -100,6 +105,24 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
 //		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.javaCameraView);
         mOpenCvCameraView.setCvCameraViewListener(this);
+
+        ///**********Read XML File**********************
+
+        try{
+
+            Scanner sc = new Scanner(new FileInputStream(new File(PicturesDir + "/templateDataFormMarkup.csv")));
+            String[] coordinatesHolder = sc.nextLine().split(",");
+            coordinates = new int[coordinatesHolder.length];
+
+            for(int i=0;i<coordinatesHolder.length;i++)
+                coordinates[i] = Integer.parseInt(coordinatesHolder[i]);
+        }
+        catch (Exception e)
+        {}
+
+
+
+        //*********************************************/
     }
 
     @Override
@@ -118,7 +141,7 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
         {
             output = new Mat();
 //            Highgui.imwrite(PicturesDir + "/inputOriginal.jpg", rgbaHolder);
-            imageProcess(rgba.getNativeObjAddr(), gray.getNativeObjAddr(), templateCanny.getNativeObjAddr(), templateKeypoints.getNativeObjAddr(), templateDescriptors.getNativeObjAddr(), output.getNativeObjAddr());
+            imageProcess(rgba.getNativeObjAddr(), gray.getNativeObjAddr(), templateCanny.getNativeObjAddr(), templateKeypoints.getNativeObjAddr(), templateDescriptors.getNativeObjAddr(), output.getNativeObjAddr(),coordinates);
 //            Highgui.imwrite(PicturesDir + "/op.jpg", output);
             Highgui.imwrite(PicturesDir+"/op2.jpg", rgbaHolder);
         }
