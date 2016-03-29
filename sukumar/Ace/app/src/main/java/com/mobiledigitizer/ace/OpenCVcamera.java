@@ -13,14 +13,9 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.Size;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.highgui.Highgui;
-import org.opencv.imgproc.Imgproc;
-
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.Scanner;
 
 public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -109,8 +104,7 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
         ///**********Read XML File**********************
 
         try{
-
-            Scanner sc = new Scanner(new FileInputStream(new File(PicturesDir + "/templateDataFormMarkup.csv")));
+            Scanner sc = new Scanner(this.getResources().openRawResource(R.raw.templatedemoformmarkup));
             String[] coordinatesHolder = sc.nextLine().split(",");
             coordinates = new int[coordinatesHolder.length];
 

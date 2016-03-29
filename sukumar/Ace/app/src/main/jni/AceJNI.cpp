@@ -202,15 +202,16 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
     std::vector<vector<Point2f> > mappingConatiner;
     std::vector<Point2f> templateDigitizeSection(2);
     std::vector<Point2f> frameDigitizeSection(2);
-
+///*
 	for (int i=0; i<makrupLen; i+=4){
 
-		templateDigitizeSection[0] = Point2f(markup[i+1],markup[i]);
-		templateDigitizeSection[1] = Point2f(markup[i+3],markup[i+2]);
+		templateDigitizeSection[0] = Point2f(markup[i],markup[i+1]);
+		templateDigitizeSection[1] = Point2f(markup[i+2],markup[i+3]);
 		perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
 		rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
 
 	}
+// */
     /*
 	{
         templateDigitizeSection[0] = Point2f(691,588);
@@ -315,13 +316,13 @@ bool comapreDMatch(DMatch match1,DMatch match2)
 /**********Data*********
 TemplateDemoForm Sections to digitize
     Value section
-    588,691 - 1021,766
-    588,766 - 1021,840
+    573,691 - 140,766
+    573,766 - 140,840
 
-    587,1020 - 1020,1092
-    587,1092 - 1020,1165
-    587,1165 - 1020,1240
-    587,1240 - 1020,1310
+    574,1020 - 141,1092
+    574,1092 - 141,1165
+    574,1165 - 141,1240
+    574,1240 - 141,1310
 
     Key Section
     151,1020 - 587,1092 (Groundnut)
