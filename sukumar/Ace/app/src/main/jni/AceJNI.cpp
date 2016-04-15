@@ -18,7 +18,7 @@ using namespace cv;
 extern "C" {
 JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput,jintArray markupAddr);
 void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp);
-bool comapreDMatch(DMatch match1,DMatch match2);
+bool compareDMatch(DMatch match1, DMatch match2);
 
 JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput,jintArray markupAddr){
 //	__android_log_print(ANDROID_LOG_ERROR, "jni", "Entered Native Code2.0");
@@ -35,7 +35,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 	vector<KeyPoint> templateKeypoints;
 	Mat& templateImgGray =  *(Mat*) addrTemplateMat;
 
-	jsize makrupLen = env->GetArrayLength(markupAddr);
+	jsize markupLen = env->GetArrayLength(markupAddr);
 	jint *markup = env->GetIntArrayElements(markupAddr, 0);
 
 //	Mat templateImgGray;
@@ -73,7 +73,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 	RNG rng(12345);
 	findContours( grayCanny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
-	double maxBoundryArea = 0, doubleHolder;
+	double maxBoundaryArea = 0, doubleHolder;
 	int formContourIndex = -1;
 	Rect boundRect;
 	vector <vector<Point> > contours_poly(contours.size());
@@ -83,18 +83,19 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 		for (size_t i = 0; i < contours.size(); i++) {
 			approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
 			doubleHolder = contourArea(contours[i]);
-			if (doubleHolder > maxBoundryArea) {
-				maxBoundryArea = doubleHolder;
+			if (doubleHolder > maxBoundaryArea) {
+				maxBoundaryArea = doubleHolder;
 				formContourIndex = i;
 			}
 		}
 		boundRect = boundingRect(Mat(contours[formContourIndex]));
-		if(maxBoundryArea > 2) {
+		if(maxBoundaryArea > 2) {
 			Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
 			rectangle(rgba, boundRect.tl(), boundRect.br(), color, 2, 8, 0);
 		}
 	}
-	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),maxBoundryArea);
+	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),
+						maxBoundaryArea);
 
 //	if(contours.size() > 1)
 //        gray = gray(boundRect);
@@ -133,7 +134,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 	double AvgError = 0;
 	std::vector< DMatch > good_matches;
 
-    sort(matches.begin(),matches.end(),comapreDMatch);
+    sort(matches.begin(),matches.end(),compareDMatch);
     for(int i=0;i<min(10,(int)matches.size());i++)
     {
         goodMatchCount = 10;
@@ -199,18 +200,24 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 //    __android_log_print(ANDROID_LOG_ERROR, "info", "template check vector - %d frame check vector- %d\n",npoints,npoin);
     Mat H = findHomography( templateCorners, frameCorners, CV_RANSAC );
 
-    std::vector<vector<Point2f> > mappingConatiner;
+    std::vector<vector<Point2f> > mappingContainer;
     std::vector<Point2f> templateDigitizeSection(2);
     std::vector<Point2f> frameDigitizeSection(2);
 ///*
-	for (int i=0; i<makrupLen; i+=4){
+	for (int i=0; i< markupLen; i+=4){
 
 		templateDigitizeSection[0] = Point2f(markup[i],markup[i+1]);
 		templateDigitizeSection[1] = Point2f(markup[i+2],markup[i+3]);
 		perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
 		rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
-
+		markup[i] = frameDigitizeSection[0].x;
+		markup[i+1] = frameDigitizeSection[0].y;
+		markup[i+2] = frameDigitizeSection[1].x;
+		markup[i+3] = frameDigitizeSection[1].y;
 	}
+
+
+
 // */
     /*
 	{
