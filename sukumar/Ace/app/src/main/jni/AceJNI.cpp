@@ -16,11 +16,11 @@ using namespace std;
 using namespace cv;
 
 extern "C" {
-JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput,jintArray markupAddr);
+JNIEXPORT jintArray JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput,jintArray markupAddr);
 void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp);
 bool compareDMatch(DMatch match1, DMatch match2);
 
-JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput,jintArray markupAddr){
+JNIEXPORT jintArray  JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JNIEnv* env,jobject thisObj,jlong addrRgba,jlong addrGray,jlong addrTemplateMat,jlong addrTemplateKeypoints,jlong addrTemplateDescriptors,jlong addrOutput,jintArray markupAddr){
 //	__android_log_print(ANDROID_LOG_ERROR, "jni", "Entered Native Code2.0");
 
 	clock_t tStart;
@@ -37,7 +37,8 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 
 	jsize markupLen = env->GetArrayLength(markupAddr);
 	jint *markup = env->GetIntArrayElements(markupAddr, 0);
-
+    jintArray outputMarkup = env->NewIntArray(markupLen);
+	__android_log_print(ANDROID_LOG_ERROR, "info", "Output Array Created");
 //	Mat templateImgGray;
 //	Mat& templateImg = *(Mat*) addrTemplateMat;
 //	tStart = clock();
@@ -55,13 +56,13 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 	Mat_to_vector_KeyPoint(templateKeypointMat,templateKeypoints);
 //	__android_log_print(ANDROID_LOG_ERROR, "info", "MatofKeypoint to vector - %fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
-    SiftFeatureDetector detector;
+//    SiftFeatureDetector detector;
 //    OrbFeatureDetector detector;
 //    OrbDescriptorExtractor descriptor;
 //    FastFeatureDetector detector;
 //    SurfFeatureDetector detector;
 //    SiftDescriptorExtractor descriptor;
-    SurfDescriptorExtractor descriptor;
+//    SurfDescriptorExtractor descriptor;
 //    BriefDescriptorExtractor descriptor;
 
 	std::vector<KeyPoint> keypoints_1;
@@ -94,8 +95,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 			rectangle(rgba, boundRect.tl(), boundRect.br(), color, 2, 8, 0);
 		}
 	}
-	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),
-						maxBoundaryArea);
+//	__android_log_print(ANDROID_LOG_ERROR, "info", "Contour count: %d  Area: %f",contours.size(),maxBoundaryArea);
 
 //	if(contours.size() > 1)
 //        gray = gray(boundRect);
@@ -195,10 +195,11 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
     templateCorners[0] = Point2f (0,0); templateCorners[1] = Point2f( templateImgGray.cols, 0 );
     templateCorners[2] = Point2f( templateImgGray.cols, templateImgGray.rows ); templateCorners[3] = Point2f( 0, templateImgGray.rows );
 
-//    int npoints = templateCorners.getMat().checkVector(2);
-//    int npoin = frameCorners.getMat().checkVector(2);
-//    __android_log_print(ANDROID_LOG_ERROR, "info", "template check vector - %d frame check vector- %d\n",npoints,npoin);
+	__android_log_print(ANDROID_LOG_ERROR, "info", "***%f-%f %f-%f",templateCorners[0].x,templateCorners[0].y,templateCorners[1].x,templateCorners[1].y);
+	__android_log_print(ANDROID_LOG_ERROR, "info", "   %f-%f %f-%f",frameCorners[0].x,frameCorners[0].y,frameCorners[1].x,frameCorners[1].y);
+
     Mat H = findHomography( templateCorners, frameCorners, CV_RANSAC );
+
 
     std::vector<vector<Point2f> > mappingContainer;
     std::vector<Point2f> templateDigitizeSection(2);
@@ -215,45 +216,7 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 		markup[i+2] = frameDigitizeSection[1].x;
 		markup[i+3] = frameDigitizeSection[1].y;
 	}
-
-
-
-// */
-    /*
-	{
-        templateDigitizeSection[0] = Point2f(691,588);
-        templateDigitizeSection[1] = Point2f(766,1021);
-        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
-        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
-
-        templateDigitizeSection[0] = Point2f(766,588);
-        templateDigitizeSection[1] = Point2f(840,1021);
-        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
-        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
-
-        templateDigitizeSection[0] = Point2f(1020,587);
-        templateDigitizeSection[1] = Point2f(1092,1020);
-        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
-        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
-
-        templateDigitizeSection[0] = Point2f(1020,151);
-        templateDigitizeSection[1] = Point2f(1092,587);
-        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
-        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
-
-        templateDigitizeSection[0] = Point2f(1165,587);
-        templateDigitizeSection[1] = Point2f(1240,1020);
-        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
-        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
-
-        templateDigitizeSection[0] = Point2f(1240,587);
-        templateDigitizeSection[1] = Point2f(1310,1020);
-        perspectiveTransform( templateDigitizeSection, frameDigitizeSection, H);
-        rectangle(rgba, frameDigitizeSection[0], frameDigitizeSection[1], Scalar(0, 255, 0), 2, 8, 0);
-
-    }
-	*/
-
+//    __android_log_print(ANDROID_LOG_ERROR, "info", "%f-%f %f-%f",frameDigitizeSection[0].x,frameDigitizeSection[0].y,frameDigitizeSection[1].x,frameDigitizeSection[1].y);
 
 /*******Side by Side Mapping*******************
     Mat imgMatches(templateImgGray.rows+gray.rows,templateImgGray.cols+gray.cols,CV_8UC1);
@@ -300,7 +263,9 @@ JNIEXPORT void JNICALL Java_com_mobiledigitizer_ace_OpenCVcamera_imageProcess(JN
 	}
 */
 //    rgba = grayCannyHolder;
-
+    env->SetIntArrayRegion(outputMarkup, 0, markupLen, markup);
+//    env->ReleaseIntArrayElements(markupAddr, markup, 0);
+    return outputMarkup;
 }
 
 void Mat_to_vector_KeyPoint(Mat& mat, vector<KeyPoint>& v_kp)

@@ -1,2 +1,2 @@
-include ':app'
+include ':app', ':tess-two'
 include ':openCVLibrary2411'

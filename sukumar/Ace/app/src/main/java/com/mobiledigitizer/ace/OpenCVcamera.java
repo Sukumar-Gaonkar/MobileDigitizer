@@ -7,6 +7,7 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -39,7 +40,8 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
     Bitmap bitmap;
     TessBaseAPI baseApi = new TessBaseAPI();
     int[] coordinates;
-    public native void imageProcess(long matAddrRgba,long matAddrGray,long templateMat,long templateKeypoints,long templateDescriptors,long addrOutput,int[] markup);
+    int[] processedCoordinates;
+    public native int[] imageProcess(long matAddrRgba,long matAddrGray,long templateMat,long templateKeypoints,long templateDescriptors,long addrOutput,int[] markup);
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -59,8 +61,10 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
                     templateDescriptors = new Mat();
                     templateCanny = new Mat();
                     templateMat = new Mat();
-                    templateMatBig = Highgui.imread(AceDirectory + "/templateDemoForm.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+                    templateMatBig = Highgui.imread(AceDirectory + "/templates/templateDemoForm.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
 
+                    if(templateMatBig.empty())
+                        Toast.makeText(mAppContext,"Template could not be loaded",Toast.LENGTH_LONG).show();;
                     if(templateMatBig.height() > templateMatBig.width())
                     {
                         templateMatBig = templateMatBig.t();
@@ -85,7 +89,7 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
 
 
 //                    {
-                        rgbaHolder = Highgui.imread(AceDirectory +"/frameICCPCT.jpg",Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+//                        rgbaHolder = Highgui.imread(AceDirectory +"/frameICCPCT.jpg",Highgui.CV_LOAD_IMAGE_GRAYSCALE);
 /*                        output = new Mat();
                         rgbaHolder = Highgui.imread(AceDirectory+"/frameICCPCT.jpg",Highgui.CV_LOAD_IMAGE_GRAYSCALE);
                         Highgui.imwrite(AceDirectory + "/inputOriginal.jpg", rgbaHolder);
@@ -152,9 +156,9 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
         {
             output = new Mat();
 //            Highgui.imwrite(AceDirectory + "/inputOriginal.jpg", rgbaHolder);
-            imageProcess(rgba.getNativeObjAddr(), gray.getNativeObjAddr(), templateCanny.getNativeObjAddr(), templateKeypoints.getNativeObjAddr(), templateDescriptors.getNativeObjAddr(), output.getNativeObjAddr(), coordinates);
+            processedCoordinates = imageProcess(rgba.getNativeObjAddr(), gray.getNativeObjAddr(), templateCanny.getNativeObjAddr(), templateKeypoints.getNativeObjAddr(), templateDescriptors.getNativeObjAddr(), output.getNativeObjAddr(), coordinates);
 //            Highgui.imwrite(AceDirectory + "/op.jpg", output);
-            Highgui.imwrite(AceDirectory + "/op2.jpg", rgbaHolder);
+//            Highgui.imwrite(AceDirectory + "/op2.jpg", rgbaHolder);
         }
         return rgba;
     }
@@ -169,15 +173,23 @@ public class OpenCVcamera extends Activity implements CameraBridgeViewBase.CvCam
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (!gray.empty()) {
 
-        for(int i=0;i<coordinates.length;i++)
-        {
-
-            Mat m = new Mat(gray,new Rect(coordinates[i*4],coordinates[i*4+1],coordinates[i*4+2]-coordinates[i*4],coordinates[i*4+3]-coordinates[i*2]));
-            Utils.matToBitmap(m,bitmap);
-            baseApi.setImage(bitmap);
-            String recognizedText = baseApi.getUTF8Text();
-            Log.e("info","OCR : "+recognizedText);
+            for (int i = 0; i < processedCoordinates.length/4; i++) {
+                try {
+                    Mat toOCRMat = new Mat(gray, new Rect(Math.min(processedCoordinates[i * 4],processedCoordinates[i * 4 + 2]), Math.min(processedCoordinates[i * 4 + 1],processedCoordinates[i * 4 + 3]), Math.abs(processedCoordinates[i * 4] - processedCoordinates[i * 4 + 2]), Math.abs(processedCoordinates[i * 4 + 1] - processedCoordinates[i * 4 + 3])));
+                    toOCRMat = toOCRMat.t();
+                    Core.flip(toOCRMat, toOCRMat, 1); //transpose+flip(1)=CW
+                    bitmap = Bitmap.createBitmap(toOCRMat.cols(), toOCRMat.rows(), Bitmap.Config.ARGB_8888);
+                    Utils.matToBitmap(toOCRMat, bitmap);
+                    baseApi.setImage(bitmap);
+                    String recognizedText = baseApi.getUTF8Text();
+                    Log.e("info", "OCR : " + recognizedText);
+                    Toast.makeText(getApplication(), recognizedText, Toast.LENGTH_SHORT).show();
+                    Highgui.imwrite(AceDirectory + "/" + i + ".jpg", toOCRMat);
+                }catch(Exception ex)
+                {Log.e("info",ex.toString());}
+            }
         }
         return super.onTouchEvent(event);
     }
